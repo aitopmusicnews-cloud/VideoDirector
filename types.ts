@@ -1,0 +1,42 @@
+
+export interface FormState {
+  songFile: File | null;
+  lyricsFile: File | null;
+  actorImageFile: File | null;
+  actorName: string;
+  directorialStyle: string;
+  videoStyle: string;
+  artStyle: string;
+  songLength: string;
+  promptFormat: string;
+  temperature: number;
+  shotLength: number;
+  format: 'horizontal' | 'vertical' | 'square' | 'ultrawide' | 'classic';
+  scriptType: 'full' | 'promo-30' | 'promo-60';
+}
+
+export interface TransitionFormState {
+  shotListFile: File | null;
+  scene1VideoFile: File | null;
+  scene2VideoFile: File | null;
+  fromShot: string;
+  toShot: string;
+  directorialStyle: string;
+  videoStyle: string;
+  artStyle: string;
+  temperature: number;
+  transitionLength: number;
+  format: 'horizontal' | 'vertical' | 'square' | 'ultrawide' | 'classic';
+  promptFormat: string;
+}
+
+export interface Shot {
+  shotNumber: number;
+  timestamp: string;
+  cameraAngle: string;
+  shotDescription: string;
+  lighting: string;
+  location: string;
+  imagePrompt?: string; // Renamed from midjourneyPrompt for generality
+  videoPrompt?: string; // For transition shots
+}
