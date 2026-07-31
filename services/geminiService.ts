@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import type { FormState, Shot, TransitionFormState, TransitionResult } from '../types';
 import { FORMAT_LABELS } from '../constants';
 
-const DEFAULT_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+const DEFAULT_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
 const MAX_INLINE_FILE_BYTES = 14 * 1024 * 1024;
 
 function getClient(apiKey: string) {
@@ -110,7 +110,6 @@ Return a JSON object with exactly this shape:
     model: DEFAULT_MODEL,
     contents: [{ role: 'user', parts }],
     config: {
-      temperature: form.temperature,
       maxOutputTokens: 8192,
       responseMimeType: 'application/json',
     },
@@ -118,7 +117,7 @@ Return a JSON object with exactly this shape:
 
   const parsed = parseJson<{ shots?: Partial<Shot>[] }>(response.text || '{}');
   if (!Array.isArray(parsed.shots) || parsed.shots.length === 0) {
-    throw new Error('Gemini returned no shots. Try a slightly lower temperature or shorter target duration.');
+    throw new Error('Gemini returned no shots. Try a shorter target duration or regenerate.');
   }
   return parsed.shots.map(normalizeShot);
 }
@@ -164,7 +163,6 @@ Return JSON only in this exact shape:
       ] as any[],
     }],
     config: {
-      temperature: form.temperature,
       maxOutputTokens: 2048,
       responseMimeType: 'application/json',
     },
