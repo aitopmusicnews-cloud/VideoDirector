@@ -1,3 +1,5 @@
+export type FrameFormat = 'horizontal' | 'vertical' | 'square' | 'ultrawide' | 'classic';
+export type ScriptType = 'full' | 'promo-30' | 'promo-60';
 
 export interface FormState {
   songFile: File | null;
@@ -11,8 +13,8 @@ export interface FormState {
   promptFormat: string;
   temperature: number;
   shotLength: number;
-  format: 'horizontal' | 'vertical' | 'square' | 'ultrawide' | 'classic';
-  scriptType: 'full' | 'promo-30' | 'promo-60';
+  format: FrameFormat;
+  scriptType: ScriptType;
 }
 
 export interface TransitionFormState {
@@ -26,17 +28,28 @@ export interface TransitionFormState {
   artStyle: string;
   temperature: number;
   transitionLength: number;
-  format: 'horizontal' | 'vertical' | 'square' | 'ultrawide' | 'classic';
+  format: FrameFormat;
   promptFormat: string;
 }
 
 export interface Shot {
   shotNumber: number;
   timestamp: string;
-  cameraAngle: string;
-  shotDescription: string;
-  lighting: string;
   location: string;
-  imagePrompt?: string; // Renamed from midjourneyPrompt for generality
-  videoPrompt?: string; // For transition shots
+  cameraAngle: string;
+  lighting: string;
+  shotDescription: string;
+  lyricSync: string;
+  imagePrompt: string;
+  videoPrompt: string;
+}
+
+export interface TransitionResult {
+  title: string;
+  durationSeconds: number;
+  transitionDescription: string;
+  cameraMovement: string;
+  visualEffect: string;
+  continuityNotes: string;
+  videoPrompt: string;
 }

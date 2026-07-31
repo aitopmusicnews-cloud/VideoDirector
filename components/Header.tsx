@@ -1,17 +1,12 @@
-
-import React from 'react';
-
-const Header: React.FC = () => {
+export default function Header() {
   return (
-    <header className="text-center border-b-2 border-cyan-500/30 pb-4">
-      <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-        MV Director AI
-      </h1>
-      <p className="mt-2 text-lg text-gray-400">
-        Crafting Your Visual Symphony, Shot by Shot
-      </p>
+    <header className="hero">
+      <div>
+        <p className="eyebrow">Gemini-powered previsualization</p>
+        <h1>MV Director AI</h1>
+        <p className="muted">Crafting your visual symphony, shot by shot.</p>
+      </div>
+      <div className="gemini-badge">Gemini</div>
     </header>
   );
-};
-
-export default Header;
+}
