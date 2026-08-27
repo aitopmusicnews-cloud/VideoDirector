@@ -1,9 +1,11 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import type { FormState, Shot, TransitionFormState, TransitionResult } from '../types';
 import { FORMAT_LABELS } from '../constants';
+import { parseGeminiJson } from './geminiJson';
 
 const DEFAULT_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
 const MAX_INLINE_FILE_BYTES = 14 * 1024 * 1024;
+const STORYBOARD_MAX_OUTPUT_TOKENS = 65536;
 
 function getClient(apiKey: string) {
   const key = apiKey.trim();
@@ -110,12 +112,16 @@ Return a JSON object with exactly this shape:
     model: DEFAULT_MODEL,
     contents: [{ role: 'user', parts }],
     config: {
-      maxOutputTokens: 8192,
+      maxOutputTokens: STORYBOARD_MAX_OUTPUT_TOKENS,
       responseMimeType: 'application/json',
+      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
     },
   });
 
-  const parsed = parseJson<{ shots?: Partial<Shot>[] }>(response.text || '{}');
+  const parsed = parseGeminiJson<{ shots?: Partial<Shot>[] }>(
+    response.text || '{}',
+    response.candidates?.[0]?.finishReason,
+  );
   if (!Array.isArray(parsed.shots) || parsed.shots.length === 0) {
     throw new Error('Gemini returned no shots. Try a shorter target duration or regenerate.');
   }
