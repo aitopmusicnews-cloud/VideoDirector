@@ -1,7 +1,7 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import type { FormState, Shot, TransitionFormState, TransitionResult } from '../types';
 import { FORMAT_LABELS } from '../constants';
-import { parseGeminiJson } from './geminiJson';
+import { generateAndParseGeminiJson } from './geminiJson';
 
 const DEFAULT_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.5-flash';
 const MAX_INLINE_FILE_BYTES = 14 * 1024 * 1024;
@@ -49,11 +49,6 @@ function normalizeShot(raw: Partial<Shot>, index: number): Shot {
     imagePrompt: String(raw.imagePrompt || ''),
     videoPrompt: String(raw.videoPrompt || raw.imagePrompt || ''),
   };
-}
-
-function parseJson<T>(text: string): T {
-  const trimmed = text.trim().replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(trimmed) as T;
 }
 
 function scriptTarget(form: FormState) {
@@ -108,20 +103,19 @@ Return a JSON object with exactly this shape:
   if (form.actorImageFile) parts.push(await fileToInlinePart(form.actorImageFile));
   if (form.songFile) parts.push(await fileToInlinePart(form.songFile));
 
-  const response = await client.models.generateContent({
-    model: DEFAULT_MODEL,
-    contents: [{ role: 'user', parts }],
-    config: {
-      maxOutputTokens: STORYBOARD_MAX_OUTPUT_TOKENS,
-      responseMimeType: 'application/json',
-      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
-    },
-  });
-
-  const parsed = parseGeminiJson<{ shots?: Partial<Shot>[] }>(
-    response.text || '{}',
-    response.candidates?.[0]?.finishReason,
+  const parsed = await generateAndParseGeminiJson<{ shots?: Partial<Shot>[] }>(
+    () => client.models.generateContent({
+      model: DEFAULT_MODEL,
+      contents: [{ role: 'user', parts }],
+      config: {
+        maxOutputTokens: STORYBOARD_MAX_OUTPUT_TOKENS,
+        responseMimeType: 'application/json',
+        thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      },
+    }),
+    'Storyboard',
   );
+
   if (!Array.isArray(parsed.shots) || parsed.shots.length === 0) {
     throw new Error('Gemini returned no shots. Try a shorter target duration or regenerate.');
   }
@@ -158,23 +152,25 @@ Create one transition that visually bridges color, composition, subject position
 Return JSON only in this exact shape:
 {"title":"...","durationSeconds":2,"transitionDescription":"...","cameraMovement":"...","visualEffect":"...","continuityNotes":"...","videoPrompt":"..."}`;
 
-  const response = await client.models.generateContent({
-    model: DEFAULT_MODEL,
-    contents: [{
-      role: 'user',
-      parts: [
-        { text: prompt },
-        dataUrlToInlinePart(scene1LastFrame),
-        dataUrlToInlinePart(scene2FirstFrame),
-      ] as any[],
-    }],
-    config: {
-      maxOutputTokens: 2048,
-      responseMimeType: 'application/json',
-    },
-  });
+  const parsed = await generateAndParseGeminiJson<Partial<TransitionResult>>(
+    () => client.models.generateContent({
+      model: DEFAULT_MODEL,
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          dataUrlToInlinePart(scene1LastFrame),
+          dataUrlToInlinePart(scene2FirstFrame),
+        ] as any[],
+      }],
+      config: {
+        maxOutputTokens: 2048,
+        responseMimeType: 'application/json',
+      },
+    }),
+    'Transition',
+  );
 
-  const parsed = parseJson<Partial<TransitionResult>>(response.text || '{}');
   if (!parsed.transitionDescription || !parsed.videoPrompt) {
     throw new Error('Gemini returned an incomplete transition. Please try again.');
   }
